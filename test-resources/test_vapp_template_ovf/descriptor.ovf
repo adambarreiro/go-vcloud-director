@@ -48,12 +48,6 @@
     <ovf:VirtualSystemCollection ovf:id="yVM">
         <ovf:Info>A collection of virtual machines</ovf:Info>
         <ovf:Name>yVM</ovf:Name>
-        <ovf:AnnotationSection>
-            <ovf:Info>A human-readable annotation</ovf:Info>
-            <ovf:Annotation>Name: yVM (a very small virtual machine)
-Release date: 11th November 2015
-For more information, please visit: cloudarchitectblog.wordpress.com</ovf:Annotation>
-        </ovf:AnnotationSection>
         <ovf:StartupSection>
             <ovf:Info>VApp startup section</ovf:Info>
             <ovf:Item ovf:id="yVM" ovf:order="0" ovf:startAction="powerOn" ovf:startDelay="0" ovf:stopAction="powerOff" ovf:stopDelay="0"/>
@@ -61,12 +55,6 @@ For more information, please visit: cloudarchitectblog.wordpress.com</ovf:Annota
         <ovf:VirtualSystem ovf:id="yVM">
             <ovf:Info>A virtual machine</ovf:Info>
             <ovf:Name>yVM</ovf:Name>
-            <ovf:AnnotationSection>
-                <ovf:Info>A human-readable annotation</ovf:Info>
-                <ovf:Annotation>Name: yVM (a very small virtual machine)
-Release date: 11th November 2015
-For more information, please visit: cloudarchitectblog.wordpress.com</ovf:Annotation>
-            </ovf:AnnotationSection>
             <ovf:OperatingSystemSection ovf:id="36" vmw:osType="otherLinuxGuest">
                 <ovf:Info>Specifies the operating system installed</ovf:Info>
                 <ovf:Description>Other Linux (32-bit)</ovf:Description>
