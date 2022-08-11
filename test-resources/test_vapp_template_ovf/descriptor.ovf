@@ -50,9 +50,7 @@
         <ovf:Name>yVM</ovf:Name>
         <ovf:AnnotationSection>
             <ovf:Info>A human-readable annotation</ovf:Info>
-            <ovf:Annotation>Name: yVM (a very small virtual machine)
-Release date: 11th November 2015
-For more information, please visit: cloudarchitectblog.wordpress.com</ovf:Annotation>
+            <ovf:Annotation>foo</ovf:Annotation>
         </ovf:AnnotationSection>
         <ovf:StartupSection>
             <ovf:Info>VApp startup section</ovf:Info>
@@ -63,9 +61,7 @@ For more information, please visit: cloudarchitectblog.wordpress.com</ovf:Annota
             <ovf:Name>yVM</ovf:Name>
             <ovf:AnnotationSection>
                 <ovf:Info>A human-readable annotation</ovf:Info>
-                <ovf:Annotation>Name: yVM (a very small virtual machine)
-Release date: 11th November 2015
-For more information, please visit: cloudarchitectblog.wordpress.com</ovf:Annotation>
+                <ovf:Annotation>foo</ovf:Annotation>
             </ovf:AnnotationSection>
             <ovf:OperatingSystemSection ovf:id="36" vmw:osType="otherLinuxGuest">
                 <ovf:Info>Specifies the operating system installed</ovf:Info>
