@@ -17,6 +17,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 	"time"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -273,6 +274,8 @@ func (client *Client) newRequest(params map[string]string, notEncodedParams map[
 // NewRequest creates a new HTTP request and applies necessary auth headers if set.
 func (client *Client) NewRequest(params map[string]string, method string, reqUrl url.URL, body io.Reader) *http.Request {
 	foo("foo")
+	w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', 0)
+	fmt.Fprintf(w, "a")
 	return client.NewRequestWitNotEncodedParams(params, nil, method, reqUrl, body)
 }
 
