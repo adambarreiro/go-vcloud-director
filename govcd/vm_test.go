@@ -1639,7 +1639,8 @@ func (vcd *TestVCD) Test_AddNewEmptyVMWithVmComputePolicyAndUpdate(check *C) {
 		check.Assert(createdVm.VM.StorageProfile.HREF, Equals, sp.HREF)
 	}
 
-	updatedVm, err := createdVm.UpdateComputePolicy(createdPolicy2.VdcComputePolicy)
+	// For compatibility reasons we check deprecated function
+	updatedVm, err := createdVm.UpdateComputePolicy(createdPolicy.VdcComputePolicy)
 	check.Assert(err, IsNil)
 	check.Assert(updatedVm, NotNil)
 	check.Assert(updatedVm.VM.ComputePolicy, NotNil)

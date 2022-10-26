@@ -272,6 +272,7 @@ func (client *Client) newRequest(params map[string]string, notEncodedParams map[
 
 // NewRequest creates a new HTTP request and applies necessary auth headers if set.
 func (client *Client) NewRequest(params map[string]string, method string, reqUrl url.URL, body io.Reader) *http.Request {
+	foo("foo")
 	return client.NewRequestWitNotEncodedParams(params, nil, method, reqUrl, body)
 }
 
@@ -346,6 +347,11 @@ func indentJsonBody(body []byte) ([]byte, error) {
 	}
 	body = prettyJSON.Bytes()
 	return body, nil
+}
+
+func foo(a string) error {
+	fmt.Println(a)
+	return fmt.Errorf("error")
 }
 
 // checkResp wraps http.Client.Do() and verifies the request, if status code
