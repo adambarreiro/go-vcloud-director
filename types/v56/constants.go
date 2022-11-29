@@ -407,6 +407,8 @@ const (
 	OpenApiEndpointAlbVirtualServiceSummaries       = "edgeGateways/%s/loadBalancer/virtualServiceSummaries" // %s contains edge gateway
 	OpenApiEndpointAlbServiceEngineGroupAssignments = "loadBalancer/serviceEngineGroups/assignments/"
 	OpenApiEndpointAlbEdgeGateway                   = "edgeGateways/%s/loadBalancer"
+
+	OpenApiEndpointEntityTypes = "entityTypes/"
 )
 
 // Header keys to run operations in tenant context

@@ -18,6 +18,9 @@ import (
 
 // endpointMinApiVersions holds mapping of OpenAPI endpoints and API versions they were introduced in.
 var endpointMinApiVersions = map[string]string{
+
+	// ******* v1.0.0 endpoints *******
+
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointRights:                              "31.0",
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointRightsBundles:                       "31.0",
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointRightsCategories:                    "31.0",
@@ -54,6 +57,7 @@ var endpointMinApiVersions = map[string]string{
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointSecurityTags:                       "36.0", // VCD 10.3+
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointNsxtRouteAdvertisement:             "34.0", // VCD 10.1+
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointLogicalVmGroups:                    "35.0", // VCD 10.2+
+	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntityTypes:                        "35.0", // VCD 10.2+
 
 	// NSX-T ALB (Advanced/AVI Load Balancer) support was introduced in 10.2
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointAlbController:                    "35.0", // VCD 10.2+
@@ -71,14 +75,16 @@ var endpointMinApiVersions = map[string]string{
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointSSLCertificateLibraryOld:         "35.0", // VCD 10.2+ and deprecated from 10.3
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcGroupsDfwRules:                "35.0", // VCD 10.2+
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointNetworkContextProfiles:           "35.0", // VCD 10.2+
+	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcNetworkProfile:                "36.0", // VCD 10.3+
 
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEdgeBgpNeighbor:          "35.0", // VCD 10.2+
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEdgeBgpConfigPrefixLists: "35.0", // VCD 10.2+
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEdgeBgpConfig:            "35.0", // VCD 10.2+
 
+	// ******* v2.0.0 endpoints *******
+
 	types.OpenApiPathVersion2_0_0 + types.OpenApiEndpointVdcAssignedComputePolicies: "35.0",
 	types.OpenApiPathVersion2_0_0 + types.OpenApiEndpointVdcComputePolicies:         "35.0",
-	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcNetworkProfile:          "36.0", // VCD 10.3+
 }
 
 // elevateNsxtNatRuleApiVersion helps to elevate API version to consume newer NSX-T NAT Rule features

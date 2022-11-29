@@ -426,3 +426,19 @@ type LogicalVmGroup struct {
 	NamedVmGroupReferences OpenApiReferences `json:"namedVmGroupReferences,omitempty"` // List of named VM Groups associated with LogicalVmGroup.
 	PvdcID                 string            `json:"pvdcId,omitempty"`                 // URN for Provider VDC
 }
+
+// DefinedEntity describes what a defined entity type should look like.
+type DefinedEntity struct {
+	ID               string            `json:"id,omitempty"`               // The id of the defined entity type in URN format
+	Name             string            `json:"name,omitempty"`             // The name of the defined entity type
+	Namespace        string            `json:"nss,omitempty"`              // A unique namespace specific string. The combination of nss and version must be unique
+	Version          string            `json:"version,omitempty"`          // The version of the defined entity type. The combination of nss and version must be unique. The version string must follow semantic versioning rules
+	Description      string            `json:"description,omitempty"`      // Description of the defined entity type
+	ExternalId       string            `json:"externalId,omitempty"`       // An external entity’s id that this definition may apply to
+	Hooks            map[string]string `json:"hooks,omitempty"`            // A mapping defining which behaviors should be invoked upon specific lifecycle events, like PostCreate, PostUpdate, PreDelete. For example: "hooks": { "PostCreate": "urn:vcloud:behavior-interface:postCreateHook:vendorA:containerCluster:1.0.0" }. Added in 36.0
+	InheritedVersion string            `json:"inheritedVersion,omitempty"` // To be used when creating a new version of a defined entity type. Specifies the version of the type that will be the template for the authorization configuration of a the new version. The Type ACLs and the access requirements of the Type Behaviors of the new version will be copied from those of the inherited version. If the value of this property is ‘0’, then the new type version will not inherit another version and will have the default authorization settings, just like the first version of a new type. Added in 36.0
+	Interfaces       []string          `json:"interfaces,omitempty"`       // List of interface IDs that this defined entity type is referenced by
+	IsReadOnly       bool              `json:"readonly,omitempty"`         // `true` if the entity type cannot be modified
+	Schema           any               `json:"schema,omitempty"`           // The JSON-Schema valid definition of the defined entity type. If no JSON Schema version is specified, version 4 will be assumed
+	Vendor           string            `json:"vendor,omitempty"`           // The vendor name
+}
