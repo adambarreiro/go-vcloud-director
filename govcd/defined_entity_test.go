@@ -93,7 +93,7 @@ func (vcd *TestVCD) Test_RDE(check *C) {
 	check.Assert(newRDE.DefinedEntity.Schema.(map[string]any)["required"], NotNil)
 	check.Assert(newRDE.DefinedEntity.Schema.(map[string]any)["properties"], NotNil)
 
-	// TODO: Automatic deletion
+	AddToCleanupListOpenApi(newRDE.DefinedEntity.ID, check.TestName(), types.OpenApiPathVersion1_0_0+types.OpenApiEndpointEntityTypes+newRDE.DefinedEntity.ID)
 
 	allRDEs, err = vcd.client.GetAllRDEs(nil)
 	check.Assert(err, IsNil)
