@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	. "gopkg.in/check.v1"
+	"strings"
 )
 
 func (vcd *TestVCD) Test_RDE(check *C) {
@@ -18,7 +19,7 @@ func (vcd *TestVCD) Test_RDE(check *C) {
 	skipOpenApiEndpointTest(vcd, check, endpoint)
 	// TODO: Skip if not admin!
 
-	schema := []byte(`
+	dummyRDESchema := []byte(`
 	{
 		"definitions": {
 			"foo": {
@@ -62,10 +63,10 @@ func (vcd *TestVCD) Test_RDE(check *C) {
 	}`)
 
 	var jsonSchema map[string]any
-	err := json.Unmarshal(schema, &jsonSchema)
+	err := json.Unmarshal(dummyRDESchema, &jsonSchema)
 	check.Assert(err, IsNil)
 
-	rde := &types.DefinedEntity{
+	dummyRde := &types.DefinedEntity{
 		Name:        check.TestName() + "_name",
 		Namespace:   check.TestName() + "_nss",
 		Version:     "1.2.3",
@@ -76,18 +77,38 @@ func (vcd *TestVCD) Test_RDE(check *C) {
 		IsReadOnly:  true,
 	}
 
-	newRde, err := vcd.client.CreateRDE(rde)
+	allRDEs, err := vcd.client.GetAllRDEs(nil)
 	check.Assert(err, IsNil)
-	check.Assert(newRde, NotNil)
-	check.Assert(newRde.DefinedEntity.Name, Equals, rde.Name)
-	check.Assert(newRde.DefinedEntity.Namespace, Equals, rde.Namespace)
-	check.Assert(newRde.DefinedEntity.Version, Equals, rde.Version)
-	check.Assert(newRde.DefinedEntity.Schema, NotNil)
-	check.Assert(newRde.DefinedEntity.Schema.(map[string]any)["type"], Equals, "object")
-	check.Assert(newRde.DefinedEntity.Schema.(map[string]any)["definitions"], NotNil)
-	check.Assert(newRde.DefinedEntity.Schema.(map[string]any)["required"], NotNil)
-	check.Assert(newRde.DefinedEntity.Schema.(map[string]any)["properties"], NotNil)
+	alreadyPresentRDEs := len(allRDEs)
 
-	err = vcd.client.DeleteRDE(newRde.DefinedEntity.ID)
+	newRDE, err := vcd.client.CreateRDE(dummyRde)
 	check.Assert(err, IsNil)
+	check.Assert(newRDE, NotNil)
+	check.Assert(newRDE.DefinedEntity.Name, Equals, dummyRde.Name)
+	check.Assert(newRDE.DefinedEntity.Namespace, Equals, dummyRde.Namespace)
+	check.Assert(newRDE.DefinedEntity.Version, Equals, dummyRde.Version)
+	check.Assert(newRDE.DefinedEntity.Schema, NotNil)
+	check.Assert(newRDE.DefinedEntity.Schema.(map[string]any)["type"], Equals, "object")
+	check.Assert(newRDE.DefinedEntity.Schema.(map[string]any)["definitions"], NotNil)
+	check.Assert(newRDE.DefinedEntity.Schema.(map[string]any)["required"], NotNil)
+	check.Assert(newRDE.DefinedEntity.Schema.(map[string]any)["properties"], NotNil)
+
+	// TODO: Automatic deletion
+
+	allRDEs, err = vcd.client.GetAllRDEs(nil)
+	check.Assert(err, IsNil)
+	check.Assert(len(allRDEs), Equals, alreadyPresentRDEs+1)
+
+	obtainedRDE, err := vcd.client.GetRDEById(newRDE.DefinedEntity.ID)
+	check.Assert(err, IsNil)
+	check.Assert(*obtainedRDE.DefinedEntity, DeepEquals, *newRDE.DefinedEntity)
+
+	deletedId := newRDE.DefinedEntity.ID
+	err = newRDE.Delete()
+	check.Assert(err, IsNil)
+	check.Assert(*newRDE.DefinedEntity, DeepEquals, types.DefinedEntity{})
+
+	_, err = vcd.client.GetRDEById(deletedId)
+	check.Assert(err, NotNil)
+	check.Assert(strings.Contains(err.Error(), ErrorEntityNotFound.Error()), Equals, true)
 }
