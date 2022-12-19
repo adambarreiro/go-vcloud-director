@@ -427,13 +427,13 @@ type LogicalVmGroup struct {
 	PvdcID                 string            `json:"pvdcId,omitempty"`                 // URN for Provider VDC
 }
 
-// DefinedEntity describes what a defined entity type should look like.
-type DefinedEntity struct {
+// DefinedEntityType describes what a defined entity type should look like.
+type DefinedEntityType struct {
 	ID               string            `json:"id,omitempty"`               // The id of the defined entity type in URN format
 	Name             string            `json:"name,omitempty"`             // The name of the defined entity type
 	Namespace        string            `json:"nss,omitempty"`              // A unique namespace specific string. The combination of nss and version must be unique
-	Version          string            `json:"version,omitempty"`          // The version of the defined entity type. The combination of nss and version must be unique. The version string must follow semantic versioning rules
-	Description      string            `json:"description,omitempty"`      // Description of the defined entity type
+	Version          string            `json:"version,omitempty"`          // The version of the defined entity. The combination of nss and version must be unique. The version string must follow semantic versioning rules
+	Description      string            `json:"description,omitempty"`      // Description of the defined entity
 	ExternalId       string            `json:"externalId,omitempty"`       // An external entity’s id that this definition may apply to
 	Hooks            map[string]string `json:"hooks,omitempty"`            // A mapping defining which behaviors should be invoked upon specific lifecycle events, like PostCreate, PostUpdate, PreDelete. For example: "hooks": { "PostCreate": "urn:vcloud:behavior-interface:postCreateHook:vendorA:containerCluster:1.0.0" }. Added in 36.0
 	InheritedVersion string            `json:"inheritedVersion,omitempty"` // To be used when creating a new version of a defined entity type. Specifies the version of the type that will be the template for the authorization configuration of a the new version. The Type ACLs and the access requirements of the Type Behaviors of the new version will be copied from those of the inherited version. If the value of this property is ‘0’, then the new type version will not inherit another version and will have the default authorization settings, just like the first version of a new type. Added in 36.0
@@ -441,4 +441,26 @@ type DefinedEntity struct {
 	IsReadOnly       bool              `json:"readonly,omitempty"`         // `true` if the entity type cannot be modified
 	Schema           any               `json:"schema,omitempty"`           // The JSON-Schema valid definition of the defined entity type. If no JSON Schema version is specified, version 4 will be assumed
 	Vendor           string            `json:"vendor,omitempty"`           // The vendor name
+}
+
+// DefinedEntity describes an instance of a defined entity type.
+type DefinedEntity struct {
+	ID         string           `json:"id,omitempty"`         // The id of the defined entity in URN format
+	EntityType string           `json:"entityType,omitempty"` // The URN ID of the defined entity type that the entity is an instance of. This is a read-only field
+	Name       string           `json:"name,omitempty"`       // The name of the defined entity
+	ExternalId string           `json:"externalId,omitempty"` // An external entity's id that this entity may have a relation to.
+	Entity     any              `json:"entity,omitempty"`     // A JSON value representation. The JSON will be validated against the schema of the DefinedEntityType that the entity is an instance of
+	State      string           `json:"state,omitempty"`      // Every entity is created in the "PRE_CREATED" state. Once an entity is ready to be validated against its schema, it will transition in another state - RESOLVED, if the entity is valid according to the schema, or RESOLUTION_ERROR otherwise. If an entity in an "RESOLUTION_ERROR" state is updated, it will transition to the inital "PRE_CREATED" state without performing any validation. If its in the "RESOLVED" state, then it will be validated against the entity type schema and throw an exception if its invalid
+	Owner      OpenApiReference `json:"owner,omitempty"`      // The owner of the defined entity
+	Org        OpenApiReference `json:"org,omitempty"`        // The owner of the defined entity.
+}
+
+// DefinedInterface defines a interface for a defined entity. The combination of nss+version+vendor should be unique
+type DefinedInterface struct {
+	ID         string `json:"id,omitempty"`       // The id of the defined interface type in URN format
+	Name       string `json:"name,omitempty"`     // The name of the defined interface
+	Namespace  string `json:"nss,omitempty"`      // A unique namespace associated with the interface
+	Version    string `json:"version,omitempty"`  // The interface's version. The version should follow semantic versioning rules
+	Vendor     string `json:"vendor,omitempty"`   // The vendor name
+	IsReadOnly bool   `json:"readonly,omitempty"` // True if the entity type cannot be modified
 }

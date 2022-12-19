@@ -409,6 +409,8 @@ const (
 	OpenApiEndpointAlbEdgeGateway                   = "edgeGateways/%s/loadBalancer"
 
 	OpenApiEndpointEntityTypes = "entityTypes/"
+	OpenApiEndpointEntities    = "entities/"
+	OpenApiEndpointInterfaces  = "interfaces/"
 )
 
 // Header keys to run operations in tenant context
