@@ -145,14 +145,18 @@ func (vcdClient *VCDClient) GetDefinedInterfaceById(id string) (*DefinedInterfac
 
 // Update updates the receiver Defined Interface with the values given by the input.
 // Only System administrator can update Defined Interfaces.
-func (rde *DefinedInterface) Update(definedInterface types.DefinedInterface) error {
-	client := rde.client
+func (di *DefinedInterface) Update(definedInterface types.DefinedInterface) error {
+	client := di.client
 	if !client.IsSysAdmin {
 		return fmt.Errorf("updating Defined Interfaces requires System user")
 	}
 
-	if definedInterface.ID == "" {
+	if di.DefinedInterface.ID == "" {
 		return fmt.Errorf("ID of the receiver Defined Interface is empty")
+	}
+
+	if definedInterface.ID != "" && definedInterface.ID != di.DefinedInterface.ID {
+		return fmt.Errorf("ID of the receiver Defined Interface and the input ID don't match")
 	}
 
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointInterfaces
@@ -161,12 +165,12 @@ func (rde *DefinedInterface) Update(definedInterface types.DefinedInterface) err
 		return err
 	}
 
-	urlRef, err := client.OpenApiBuildEndpoint(endpoint, definedInterface.ID)
+	urlRef, err := client.OpenApiBuildEndpoint(endpoint, di.DefinedInterface.ID)
 	if err != nil {
 		return err
 	}
 
-	err = client.OpenApiPutItem(apiVersion, urlRef, nil, definedInterface, rde.DefinedInterface, nil)
+	err = client.OpenApiPutItem(apiVersion, urlRef, nil, definedInterface, di.DefinedInterface, nil)
 	if err != nil {
 		return err
 	}
@@ -176,13 +180,13 @@ func (rde *DefinedInterface) Update(definedInterface types.DefinedInterface) err
 
 // Delete deletes the receiver Defined Interface.
 // Only System administrator can delete Defined Interfaces.
-func (rde *DefinedInterface) Delete() error {
-	client := rde.client
+func (di *DefinedInterface) Delete() error {
+	client := di.client
 	if !client.IsSysAdmin {
 		return fmt.Errorf("deleting Defined Interfaces requires System user")
 	}
 
-	if rde.DefinedInterface.ID == "" {
+	if di.DefinedInterface.ID == "" {
 		return fmt.Errorf("ID of the receiver Defined Interface is empty")
 	}
 
@@ -192,7 +196,7 @@ func (rde *DefinedInterface) Delete() error {
 		return err
 	}
 
-	urlRef, err := client.OpenApiBuildEndpoint(endpoint, rde.DefinedInterface.ID)
+	urlRef, err := client.OpenApiBuildEndpoint(endpoint, di.DefinedInterface.ID)
 	if err != nil {
 		return err
 	}
@@ -202,6 +206,6 @@ func (rde *DefinedInterface) Delete() error {
 		return err
 	}
 
-	rde.DefinedInterface = &types.DefinedInterface{}
+	di.DefinedInterface = &types.DefinedInterface{}
 	return nil
 }

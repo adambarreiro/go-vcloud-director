@@ -36,6 +36,7 @@ func (vcd *TestVCD) Test_DefinedInterface(check *C) {
 	check.Assert(newDefinedInterface.DefinedInterface.Name, Equals, dummyRde.Name)
 	check.Assert(newDefinedInterface.DefinedInterface.Namespace, Equals, dummyRde.Namespace)
 	check.Assert(newDefinedInterface.DefinedInterface.Version, Equals, dummyRde.Version)
+	check.Assert(newDefinedInterface.DefinedInterface.Vendor, Equals, dummyRde.Vendor)
 	check.Assert(newDefinedInterface.DefinedInterface.IsReadOnly, Equals, dummyRde.IsReadOnly)
 
 	AddToCleanupListOpenApi(newDefinedInterface.DefinedInterface.ID, check.TestName(), types.OpenApiPathVersion1_0_0+types.OpenApiEndpointInterfaces+newDefinedInterface.DefinedInterface.ID)
@@ -51,6 +52,12 @@ func (vcd *TestVCD) Test_DefinedInterface(check *C) {
 	obtainedDefinedInterface2, err := vcd.client.GetDefinedInterface(obtainedDefinedInterface.DefinedInterface.Vendor, obtainedDefinedInterface.DefinedInterface.Namespace, obtainedDefinedInterface.DefinedInterface.Version)
 	check.Assert(err, IsNil)
 	check.Assert(*obtainedDefinedInterface2.DefinedInterface, DeepEquals, *obtainedDefinedInterface.DefinedInterface)
+
+	err = newDefinedInterface.Update(types.DefinedInterface{
+		Name: dummyRde.Name + "2", // Only name can be updated
+	})
+	check.Assert(err, IsNil)
+	check.Assert(newDefinedInterface.DefinedInterface.Name, Equals, dummyRde.Name+"2")
 
 	deletedId := newDefinedInterface.DefinedInterface.ID
 	err = newDefinedInterface.Delete()
