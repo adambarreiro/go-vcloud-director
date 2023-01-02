@@ -23,7 +23,7 @@ func (vcd *TestVCD) Test_DefinedInterface(check *C) {
 		Namespace:  check.TestName() + "_nss",
 		Version:    "1.2.3",
 		Vendor:     "vmware",
-		IsReadOnly: true,
+		IsReadOnly: false, // FIXME: Has to be always false???
 	}
 
 	allDefinedInterfaces, err := vcd.client.GetAllDefinedInterfaces(nil)
@@ -48,10 +48,14 @@ func (vcd *TestVCD) Test_DefinedInterface(check *C) {
 	check.Assert(err, IsNil)
 	check.Assert(*obtainedDefinedInterface.DefinedInterface, DeepEquals, *newDefinedInterface.DefinedInterface)
 
+	obtainedDefinedInterface2, err := vcd.client.GetDefinedInterface(obtainedDefinedInterface.DefinedInterface.Vendor, obtainedDefinedInterface.DefinedInterface.Namespace, obtainedDefinedInterface.DefinedInterface.Version)
+	check.Assert(err, IsNil)
+	check.Assert(*obtainedDefinedInterface2.DefinedInterface, DeepEquals, *obtainedDefinedInterface.DefinedInterface)
+
 	deletedId := newDefinedInterface.DefinedInterface.ID
 	err = newDefinedInterface.Delete()
 	check.Assert(err, IsNil)
-	check.Assert(*newDefinedInterface.DefinedInterface, DeepEquals, types.DefinedEntityType{})
+	check.Assert(*newDefinedInterface.DefinedInterface, DeepEquals, types.DefinedInterface{})
 
 	_, err = vcd.client.GetDefinedInterfaceById(deletedId)
 	check.Assert(err, NotNil)

@@ -85,7 +85,33 @@ func (vcdClient *VCDClient) GetAllDefinedInterfaces(queryParameters url.Values) 
 	return returnRDEs, nil
 }
 
-// GetDefinedInterfaceById gets a Defined Interface by its ID
+// GetDefinedInterface retrieves a single Defined Interface defined by its unique combination of vendor, namespace and version.
+// Only System administrator can retrieve Defined Interfaces.
+func (vcdClient *VCDClient) GetDefinedInterface(vendor, namespace, version string) (*DefinedInterface, error) {
+	client := vcdClient.Client
+	if !client.IsSysAdmin {
+		return nil, fmt.Errorf("getting Defined Interfaces requires System user")
+	}
+
+	queryParameters := url.Values{}
+	queryParameters.Add("filter", fmt.Sprintf("vendor==%s;nss==%s;version==%s", vendor, namespace, version))
+	interfaces, err := vcdClient.GetAllDefinedInterfaces(queryParameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(interfaces) == 0 {
+		return nil, fmt.Errorf("%s could not find the Defined Interface with vendor %s, namespace %s and version %s", ErrorEntityNotFound, vendor, namespace, version)
+	}
+
+	if len(interfaces) > 1 {
+		return nil, fmt.Errorf("found more than 1 Defined Interface with vendor %s, namespace %s and version %s", vendor, namespace, version)
+	}
+
+	return interfaces[0], nil
+}
+
+// GetDefinedInterfaceById gets a Defined Interface identified by its unique URN.
 // Only System administrator can retrieve Defined Interfaces.
 func (vcdClient *VCDClient) GetDefinedInterfaceById(id string) (*DefinedInterface, error) {
 	client := vcdClient.Client
@@ -93,7 +119,7 @@ func (vcdClient *VCDClient) GetDefinedInterfaceById(id string) (*DefinedInterfac
 		return nil, fmt.Errorf("getting Defined Interfaces requires System user")
 	}
 
-	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntityTypes
+	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointInterfaces
 	apiVersion, err := client.getOpenApiHighestElevatedVersion(endpoint)
 	if err != nil {
 		return nil, err
