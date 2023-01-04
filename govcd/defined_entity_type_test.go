@@ -62,7 +62,7 @@ func (vcd *TestVCD) Test_RDE(check *C) {
 		}
 	}`)
 
-	var jsonSchema map[string]any
+	var jsonSchema map[string]interface{}
 	err := json.Unmarshal(dummyRDESchema, &jsonSchema)
 	check.Assert(err, IsNil)
 
@@ -88,10 +88,10 @@ func (vcd *TestVCD) Test_RDE(check *C) {
 	check.Assert(newRDE.DefinedEntityType.Namespace, Equals, dummyRde.Namespace)
 	check.Assert(newRDE.DefinedEntityType.Version, Equals, dummyRde.Version)
 	check.Assert(newRDE.DefinedEntityType.Schema, NotNil)
-	check.Assert(newRDE.DefinedEntityType.Schema.(map[string]any)["type"], Equals, "object")
-	check.Assert(newRDE.DefinedEntityType.Schema.(map[string]any)["definitions"], NotNil)
-	check.Assert(newRDE.DefinedEntityType.Schema.(map[string]any)["required"], NotNil)
-	check.Assert(newRDE.DefinedEntityType.Schema.(map[string]any)["properties"], NotNil)
+	check.Assert(newRDE.DefinedEntityType.Schema["type"], Equals, "object")
+	check.Assert(newRDE.DefinedEntityType.Schema["definitions"], NotNil)
+	check.Assert(newRDE.DefinedEntityType.Schema["required"], NotNil)
+	check.Assert(newRDE.DefinedEntityType.Schema["properties"], NotNil)
 
 	AddToCleanupListOpenApi(newRDE.DefinedEntityType.ID, check.TestName(), types.OpenApiPathVersion1_0_0+types.OpenApiEndpointEntityTypes+newRDE.DefinedEntityType.ID)
 
@@ -102,6 +102,10 @@ func (vcd *TestVCD) Test_RDE(check *C) {
 	obtainedRDE, err := vcd.client.GetRDETypeById(newRDE.DefinedEntityType.ID)
 	check.Assert(err, IsNil)
 	check.Assert(*obtainedRDE.DefinedEntityType, DeepEquals, *newRDE.DefinedEntityType)
+
+	obtainedRDE2, err := vcd.client.GetRDEType(obtainedRDE.DefinedEntityType.Vendor, obtainedRDE.DefinedEntityType.Namespace, obtainedRDE.DefinedEntityType.Version)
+	check.Assert(err, IsNil)
+	check.Assert(*obtainedRDE2.DefinedEntityType, DeepEquals, *obtainedRDE.DefinedEntityType)
 
 	deletedId := newRDE.DefinedEntityType.ID
 	err = newRDE.Delete()
