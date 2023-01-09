@@ -217,38 +217,44 @@ func (rdeType *DefinedEntityType) Delete() error {
 }
 
 // CreateRde creates an entity of the type of the receiver Runtime Defined Entity (RDE).
+// The input RDE doesn't need to specify the type ID, as it gets it from the receiver RDE type. If it is specified anyway,
+// it must match the type ID of the receiver RDE type.
 // Only System administrator can create defined entities.
-func (rde *DefinedEntityType) CreateRde(entity types.DefinedEntity) (*DefinedEntity, error) {
-	client := rde.client
+func (rdeType *DefinedEntityType) CreateRde(entity types.DefinedEntity) (*DefinedEntity, error) {
+	client := rdeType.client
 	if !client.IsSysAdmin {
 		return nil, fmt.Errorf("creating Runtime Defined Entities requires System user")
 	}
 
-	if rde.DefinedEntityType.ID == "" {
-		return nil, fmt.Errorf("ID of the receiver Runtime Defined Entity is empty")
+	if rdeType.DefinedEntityType.ID == "" {
+		return nil, fmt.Errorf("ID of the receiver Runtime Defined Entity type is empty")
 	}
 
-	if entity.EntityType == "" {
-		return nil, fmt.Errorf("ID of the Runtime Defined Entity type is empty")
+	if entity.EntityType != "" && entity.EntityType != rdeType.DefinedEntityType.ID {
+		return nil, fmt.Errorf("ID of the Runtime Defined Entity type '%s' doesn't match with the one to create '%s'", rdeType.DefinedEntityType.ID, entity.EntityType)
 	}
 
-	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntities
+	if entity.Entity == nil || len(entity.Entity) == 0 {
+		return nil, fmt.Errorf("the entity JSON is empty")
+	}
+
+	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntityTypes
 	apiVersion, err := client.getOpenApiHighestElevatedVersion(endpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	urlRef, err := client.OpenApiBuildEndpoint(endpoint)
+	urlRef, err := client.OpenApiBuildEndpoint(endpoint, rdeType.DefinedEntityType.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	result := &DefinedEntity{
 		DefinedEntity: &types.DefinedEntity{},
-		client:        rde.client,
+		client:        client,
 	}
 
-	err = client.OpenApiPostItem(apiVersion, urlRef, nil, rde, result.DefinedEntity, nil)
+	err = client.OpenApiPostItem(apiVersion, urlRef, nil, entity, result.DefinedEntity, nil)
 	if err != nil {
 		return nil, err
 	}
