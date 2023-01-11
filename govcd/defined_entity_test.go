@@ -9,61 +9,38 @@ package govcd
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	. "gopkg.in/check.v1"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
 func (vcd *TestVCD) Test_Rde(check *C) {
+	if vcd.skipAdminTests {
+		check.Skip(fmt.Sprintf(TestRequiresSysAdminPrivileges, check.TestName()))
+	}
+
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntityTypes
 	skipOpenApiEndpointTest(vcd, check, endpoint)
-	// TODO: Skip if not admin!
 
-	dummyRdeSchema := []byte(`
-	{
-		"definitions": {
-			"foo": {
-				"type": "object",
-				"description": "Foo definition",
-				"properties": {
-					"key": {
-						"type": "string",
-						"description": "Key for foo"
-					}
-				}
-			}
-		},
-		"type": "object",
-		"required": [
-			"foo"
-		],
-		"properties": {
-			"bar": {
-				"type": "string",
-				"description": "Bar"
-			},
-			"prop2": {
-				"type": "object",
-				"properties": {
-					"subprop1": {
-						"type": "string"
-					},
-					"subprop2": {
-						"type": "array",
-						"items": {
-							"type": "string"
-						}
-					}
-				}
-			},
-			"foo": {
-				"$ref": "#/definitions/foo"
-			}
-		}
-	}`)
+	// Read RDE type schema from test resources folder
+	rdeFilePath := "../test-resources/rde_type.json"
+	rdeFile, err := os.OpenFile(filepath.Clean(rdeFilePath), os.O_RDONLY, 0400)
+	if err != nil {
+		check.Fatalf("unable to find RDE type file '%s': %s", rdeFilePath, err)
+	}
+	defer safeClose(rdeFile)
+
+	rdeSchema, err := io.ReadAll(rdeFile)
+	if err != nil {
+		check.Fatalf("error opening file %s: %s", rdeFilePath, err)
+	}
 
 	var unmarshaledJson map[string]interface{}
-	err := json.Unmarshal(dummyRdeSchema, &unmarshaledJson)
+	err = json.Unmarshal(rdeSchema, &unmarshaledJson)
 	check.Assert(err, IsNil)
 
 	dummyRdeType := &types.DefinedEntityType{
