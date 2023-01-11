@@ -408,10 +408,11 @@ const (
 	OpenApiEndpointAlbServiceEngineGroupAssignments = "loadBalancer/serviceEngineGroups/assignments/"
 	OpenApiEndpointAlbEdgeGateway                   = "edgeGateways/%s/loadBalancer"
 
-	OpenApiEndpointEntityTypes   = "entityTypes/"
-	OpenApiEndpointEntities      = "entities/"
-	OpenApiEndpointEntitiesTypes = "entities/types/"
-	OpenApiEndpointInterfaces    = "interfaces/"
+	OpenApiEndpointEntityTypes     = "entityTypes/"
+	OpenApiEndpointEntities        = "entities/"
+	OpenApiEndpointEntitiesResolve = "entities/%s/resolve"
+	OpenApiEndpointEntitiesTypes   = "entities/types/"
+	OpenApiEndpointInterfaces      = "interfaces/"
 )
 
 // Header keys to run operations in tenant context

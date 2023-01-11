@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"net/url"
+	"time"
 )
 
 // DefinedEntityType is a type for handling Runtime Defined Entity (RDE) type definitions
@@ -216,52 +217,6 @@ func (rdeType *DefinedEntityType) Delete() error {
 	return nil
 }
 
-// CreateRde creates an entity of the type of the receiver Runtime Defined Entity (RDE).
-// The input RDE doesn't need to specify the type ID, as it gets it from the receiver RDE type. If it is specified anyway,
-// it must match the type ID of the receiver RDE type.
-// Only System administrator can create defined entities.
-func (rdeType *DefinedEntityType) CreateRde(entity types.DefinedEntity) (*DefinedEntity, error) {
-	client := rdeType.client
-	if !client.IsSysAdmin {
-		return nil, fmt.Errorf("creating Runtime Defined Entities requires System user")
-	}
-
-	if rdeType.DefinedEntityType.ID == "" {
-		return nil, fmt.Errorf("ID of the receiver Runtime Defined Entity type is empty")
-	}
-
-	if entity.EntityType != "" && entity.EntityType != rdeType.DefinedEntityType.ID {
-		return nil, fmt.Errorf("ID of the Runtime Defined Entity type '%s' doesn't match with the one to create '%s'", rdeType.DefinedEntityType.ID, entity.EntityType)
-	}
-
-	if entity.Entity == nil || len(entity.Entity) == 0 {
-		return nil, fmt.Errorf("the entity JSON is empty")
-	}
-
-	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntityTypes
-	apiVersion, err := client.getOpenApiHighestElevatedVersion(endpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	urlRef, err := client.OpenApiBuildEndpoint(endpoint, rdeType.DefinedEntityType.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &DefinedEntity{
-		DefinedEntity: &types.DefinedEntity{},
-		client:        client,
-	}
-
-	err = client.OpenApiPostItem(apiVersion, urlRef, nil, entity, result.DefinedEntity, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
 // GetAllRdes gets all the RDE instances of the receiver type.
 // Only System administrator can retrieve RDEs.
 func (rdeType *DefinedEntityType) GetAllRdes(queryParameters url.Values) ([]*DefinedEntity, error) {
@@ -276,7 +231,7 @@ func (rdeType *DefinedEntityType) GetAllRdes(queryParameters url.Values) ([]*Def
 		return nil, err
 	}
 
-	urlRef, err := client.OpenApiBuildEndpoint(endpoint, rdeType.DefinedEntityType.Vendor, rdeType.DefinedEntityType.Namespace, rdeType.DefinedEntityType.Version)
+	urlRef, err := client.OpenApiBuildEndpoint(endpoint, fmt.Sprintf("%s/%s/%s", rdeType.DefinedEntityType.Vendor, rdeType.DefinedEntityType.Namespace, rdeType.DefinedEntityType.Version))
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +312,84 @@ func (rdeType *DefinedEntityType) GetRdeById(id string) (*DefinedEntity, error) 
 	return result, nil
 }
 
-// Update updates the receiver Runtime Defined Entity with the values given by the input.
+// CreateRde creates an entity of the type of the receiver Runtime Defined Entity (RDE) type.
+// The input doesn't need to specify the type ID, as it gets it from the receiver RDE type. If it is specified anyway,
+// it must match the type ID of the receiver RDE type.
+// NOTE: After RDE creation, one must call rde.Resolve(), otherwise the RDE can't be used as the state is "PRE_CREATED"
+// and the generated task will remain at 1% until resolved.
+// Only System administrator can create defined entities.
+func (rdeType *DefinedEntityType) CreateRde(entity types.DefinedEntity) (*DefinedEntity, error) {
+	client := rdeType.client
+	if !client.IsSysAdmin {
+		return nil, fmt.Errorf("creating Runtime Defined Entities requires System user")
+	}
+
+	if rdeType.DefinedEntityType.ID == "" {
+		return nil, fmt.Errorf("ID of the receiver Runtime Defined Entity type is empty")
+	}
+
+	if entity.EntityType != "" && entity.EntityType != rdeType.DefinedEntityType.ID {
+		return nil, fmt.Errorf("ID of the Runtime Defined Entity type '%s' doesn't match with the one to create '%s'", rdeType.DefinedEntityType.ID, entity.EntityType)
+	}
+
+	if entity.Entity == nil || len(entity.Entity) == 0 {
+		return nil, fmt.Errorf("the entity JSON is empty")
+	}
+
+	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntityTypes
+	apiVersion, err := client.getOpenApiHighestElevatedVersion(endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	urlRef, err := client.OpenApiBuildEndpoint(endpoint, rdeType.DefinedEntityType.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = client.OpenApiPostItemAsync(apiVersion, urlRef, nil, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	maxTries := 3
+	var rde *DefinedEntity
+	for i := 0; i < maxTries; i++ {
+		rde, err = rdeType.GetRdeByName(entity.Name)
+		if err == nil {
+			return rde, nil
+		}
+		time.Sleep(3 * time.Second)
+	}
+	return nil, fmt.Errorf("could not create RDE, failed during retrieval after creation: %s", err)
+}
+
+// Resolve needs to be called after an RDE is successfully created. It makes the receiver RDE usable if the JSON entity
+// is valid, reaching a state of RESOLVED. If it fails, the state will be RESOLUTION_ERROR,
+// and it will need to Update the JSON entity.
+func (rde *DefinedEntity) Resolve() error {
+	client := rde.client
+	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntitiesResolve
+	apiVersion, err := client.getOpenApiHighestElevatedVersion(endpoint)
+	if err != nil {
+		return err
+	}
+
+	urlRef, err := client.OpenApiBuildEndpoint(fmt.Sprintf(endpoint, rde.DefinedEntity.ID))
+	if err != nil {
+		return err
+	}
+
+	err = client.OpenApiPostItem(apiVersion, urlRef, nil, nil, rde.DefinedEntity, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Update updates the receiver Runtime Defined Entity with the values given by the input. This method is useful
+// if rde.Resolve() failed and a JSON entity change is needed.
 // Only System administrator can update RDEs.
 func (rde *DefinedEntity) Update(rdeToUpdate types.DefinedEntity) error {
 	client := rde.client

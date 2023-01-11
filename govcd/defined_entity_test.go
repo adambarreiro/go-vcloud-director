@@ -26,17 +26,22 @@ func (vcd *TestVCD) Test_Rde(check *C) {
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntityTypes
 	skipOpenApiEndpointTest(vcd, check, endpoint)
 
-	// Read RDE type schema from test resources folder
+	// Load the RDE type schema
 	rdeFilePath := "../test-resources/rde_type.json"
+	_, err := os.Stat(rdeFilePath)
+	if os.IsNotExist(err) {
+		check.Skip(fmt.Sprintf("unable to find RDE type file '%s': %s", rdeFilePath, err))
+	}
+
 	rdeFile, err := os.OpenFile(filepath.Clean(rdeFilePath), os.O_RDONLY, 0400)
 	if err != nil {
-		check.Fatalf("unable to find RDE type file '%s': %s", rdeFilePath, err)
+		check.Fatalf("unable to open RDE type file '%s': %s", rdeFilePath, err)
 	}
 	defer safeClose(rdeFile)
 
 	rdeSchema, err := io.ReadAll(rdeFile)
 	if err != nil {
-		check.Fatalf("error opening file %s: %s", rdeFilePath, err)
+		check.Fatalf("error reading RDE type file %s: %s", rdeFilePath, err)
 	}
 
 	var unmarshaledJson map[string]interface{}
@@ -44,10 +49,10 @@ func (vcd *TestVCD) Test_Rde(check *C) {
 	check.Assert(err, IsNil)
 
 	dummyRdeType := &types.DefinedEntityType{
-		Name:        check.TestName() + "_name",
-		Namespace:   check.TestName() + "_nss",
+		Name:        "name1",
+		Namespace:   "namespace9", // Can't put check.TestName() due to a bug that causes RDEs to fail on GET once created.
 		Version:     "1.2.3",
-		Description: "Description of" + check.TestName(),
+		Description: "Description of " + check.TestName(),
 		Schema:      unmarshaledJson,
 		Vendor:      "vmware",
 		Interfaces:  []string{"urn:vcloud:interface:vmware:k8s:1.0.0"},
@@ -99,20 +104,37 @@ func (vcd *TestVCD) Test_Rde(check *C) {
 		}
 	}`)
 
+	unmarshaledJson = make(map[string]interface{})
 	err = json.Unmarshal(dummyRdeEntity, &unmarshaledJson)
 	check.Assert(err, IsNil)
 
 	rde, err := obtainedRdeType.CreateRde(types.DefinedEntity{
-		Name:       "dummyRdeType",
-		ExternalId: "123",
-		Entity:     unmarshaledJson,
+		Name:   "dummyRdeType",
+		Entity: unmarshaledJson,
 	})
 	check.Assert(err, IsNil)
 	check.Assert(rde.DefinedEntity.Name, Equals, "dummyRdeType")
+	check.Assert(*rde.DefinedEntity.State, Equals, "PRE_CREATED")
 
+	err = rde.Resolve()
+	check.Assert(err, IsNil)
+	check.Assert(*rde.DefinedEntity.State, Equals, "RESOLVED")
+
+	// The RDE can't be deleted until rde.Resolve() is called
 	AddToCleanupListOpenApi(rde.DefinedEntity.ID, check.TestName(), types.OpenApiPathVersion1_0_0+types.OpenApiEndpointEntities+rde.DefinedEntity.ID)
 
-	deletedId := newRdeType.DefinedEntityType.ID
+	// Delete the RDE instance prior to the RDE type deletion
+	deletedId := rde.DefinedEntity.ID
+	err = rde.Delete()
+	check.Assert(err, IsNil)
+	check.Assert(*rde.DefinedEntity, DeepEquals, types.DefinedEntity{})
+
+	_, err = newRdeType.GetRdeById(deletedId)
+	check.Assert(err, NotNil)
+	check.Assert(strings.Contains(err.Error(), ErrorEntityNotFound.Error()), Equals, true)
+
+	// Delete the RDE type last
+	deletedId = newRdeType.DefinedEntityType.ID
 	err = newRdeType.Delete()
 	check.Assert(err, IsNil)
 	check.Assert(*newRdeType.DefinedEntityType, DeepEquals, types.DefinedEntityType{})
