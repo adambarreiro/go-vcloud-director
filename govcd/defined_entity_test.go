@@ -18,9 +18,7 @@ import (
 	"strings"
 )
 
-// Test_Rde tests a complete journey of RDE type and RDE instance creation.
-// First, it creates the RDE type with the schema present in test-resources folder.
-// TODO
+// Test_Rde tests the complete journey of RDE type and RDE instance with creation, reads, updates and finally deletion.
 func (vcd *TestVCD) Test_Rde(check *C) {
 	if vcd.skipAdminTests {
 		check.Skip(fmt.Sprintf(TestRequiresSysAdminPrivileges, check.TestName()))
@@ -34,76 +32,63 @@ func (vcd *TestVCD) Test_Rde(check *C) {
 		skipOpenApiEndpointTest(vcd, check, endpoint)
 	}
 
-	// Load the RDE type schema
-	rdeFilePath := "../test-resources/rde_type.json"
-	_, err := os.Stat(rdeFilePath)
-	if os.IsNotExist(err) {
-		check.Skip(fmt.Sprintf("unable to find RDE type file '%s': %s", rdeFilePath, err))
-	}
-
-	rdeFile, err := os.OpenFile(filepath.Clean(rdeFilePath), os.O_RDONLY, 0400)
-	if err != nil {
-		check.Fatalf("unable to open RDE type file '%s': %s", rdeFilePath, err)
-	}
-	defer safeClose(rdeFile)
-
-	rdeSchema, err := io.ReadAll(rdeFile)
-	if err != nil {
-		check.Fatalf("error reading RDE type file %s: %s", rdeFilePath, err)
-	}
-
-	var unmarshaledJson map[string]interface{}
-	err = json.Unmarshal(rdeSchema, &unmarshaledJson)
+	unmarshaledRdeTypeSchema, err := loadRdeTypeSchemaFromTestResources()
 	check.Assert(err, IsNil)
+	check.Assert(true, Equals, len(unmarshaledRdeTypeSchema) > 0)
 
-	dummyRdeType := &types.DefinedEntityType{
-		Name:        "name1",
-		Namespace:   "namespace9", // Can't put check.TestName() due to a bug that causes RDEs to fail on GET once created with special characters like "."
+	rdeTypeToCreate := &types.DefinedEntityType{
+		Name:        check.TestName(),
+		Namespace:   "namespace14", // Can't put check.TestName() due to a bug that causes RDEs to fail on GET once created with special characters like "."
 		Version:     "1.2.3",
 		Description: "Description of " + check.TestName(),
-		Schema:      unmarshaledJson,
+		Schema:      unmarshaledRdeTypeSchema,
 		Vendor:      "vmware",
 		Interfaces:  []string{"urn:vcloud:interface:vmware:k8s:1.0.0"},
-		IsReadOnly:  true,
 	}
 
 	allRdeTypes, err := vcd.client.GetAllRdeTypes(nil)
 	check.Assert(err, IsNil)
 	alreadyPresentRdes := len(allRdeTypes)
 
-	newRdeType, err := vcd.client.CreateRdeType(dummyRdeType)
+	createdRdeType, err := vcd.client.CreateRdeType(rdeTypeToCreate)
 	check.Assert(err, IsNil)
-	check.Assert(newRdeType, NotNil)
-	check.Assert(newRdeType.DefinedEntityType.Name, Equals, dummyRdeType.Name)
-	check.Assert(newRdeType.DefinedEntityType.Namespace, Equals, dummyRdeType.Namespace)
-	check.Assert(newRdeType.DefinedEntityType.Version, Equals, dummyRdeType.Version)
-	check.Assert(newRdeType.DefinedEntityType.Schema, NotNil)
-	check.Assert(newRdeType.DefinedEntityType.Schema["type"], Equals, "object")
-	check.Assert(newRdeType.DefinedEntityType.Schema["definitions"], NotNil)
-	check.Assert(newRdeType.DefinedEntityType.Schema["required"], NotNil)
-	check.Assert(newRdeType.DefinedEntityType.Schema["properties"], NotNil)
+	check.Assert(createdRdeType, NotNil)
+	check.Assert(createdRdeType.DefinedEntityType.Name, Equals, rdeTypeToCreate.Name)
+	check.Assert(createdRdeType.DefinedEntityType.Namespace, Equals, rdeTypeToCreate.Namespace)
+	check.Assert(createdRdeType.DefinedEntityType.Version, Equals, rdeTypeToCreate.Version)
+	check.Assert(createdRdeType.DefinedEntityType.Schema, NotNil)
+	check.Assert(createdRdeType.DefinedEntityType.Schema["type"], Equals, "object")
+	check.Assert(createdRdeType.DefinedEntityType.Schema["definitions"], NotNil)
+	check.Assert(createdRdeType.DefinedEntityType.Schema["required"], NotNil)
+	check.Assert(createdRdeType.DefinedEntityType.Schema["properties"], NotNil)
 
-	AddToCleanupListOpenApi(newRdeType.DefinedEntityType.ID, check.TestName(), types.OpenApiPathVersion1_0_0+types.OpenApiEndpointEntityTypes+newRdeType.DefinedEntityType.ID)
+	AddToCleanupListOpenApi(createdRdeType.DefinedEntityType.ID, check.TestName(), types.OpenApiPathVersion1_0_0+types.OpenApiEndpointEntityTypes+createdRdeType.DefinedEntityType.ID)
 
 	allRdeTypes, err = vcd.client.GetAllRdeTypes(nil)
 	check.Assert(err, IsNil)
 	check.Assert(len(allRdeTypes), Equals, alreadyPresentRdes+1)
 
-	obtainedRdeType, err := vcd.client.GetRdeTypeById(newRdeType.DefinedEntityType.ID)
+	obtainedRdeType, err := vcd.client.GetRdeTypeById(createdRdeType.DefinedEntityType.ID)
 	check.Assert(err, IsNil)
-	check.Assert(*obtainedRdeType.DefinedEntityType, DeepEquals, *newRdeType.DefinedEntityType)
+	check.Assert(*obtainedRdeType.DefinedEntityType, DeepEquals, *createdRdeType.DefinedEntityType)
 
 	obtainedRdeType2, err := vcd.client.GetRdeType(obtainedRdeType.DefinedEntityType.Vendor, obtainedRdeType.DefinedEntityType.Namespace, obtainedRdeType.DefinedEntityType.Version)
 	check.Assert(err, IsNil)
 	check.Assert(*obtainedRdeType2.DefinedEntityType, DeepEquals, *obtainedRdeType.DefinedEntityType)
 
+	// We don't want to update the name nor the schema. It should populate them from the receiver object automatically
+	err = obtainedRdeType.Update(types.DefinedEntityType{
+		Description: obtainedRdeType.DefinedEntityType.Description + "Updated",
+	})
+	check.Assert(err, IsNil)
+	check.Assert(obtainedRdeType.DefinedEntityType.Description, Equals, rdeTypeToCreate.Description+"Updated")
+
 	testRdeCrud(check, obtainedRdeType)
 
-	// Delete the RDE type last
-	deletedId := newRdeType.DefinedEntityType.ID
-	err = newRdeType.Delete()
+	deletedId := createdRdeType.DefinedEntityType.ID
+	err = createdRdeType.Delete()
 	check.Assert(err, IsNil)
-	check.Assert(*newRdeType.DefinedEntityType, DeepEquals, types.DefinedEntityType{})
+	check.Assert(*createdRdeType.DefinedEntityType, DeepEquals, types.DefinedEntityType{})
 
 	_, err = vcd.client.GetRdeTypeById(deletedId)
 	check.Assert(err, NotNil)
@@ -112,33 +97,52 @@ func (vcd *TestVCD) Test_Rde(check *C) {
 
 // testRdeCrud is a sub-section of Test_Rde that is focused on testing all RDE instances casuistics.
 func testRdeCrud(check *C, rdeType *DefinedEntityType) {
-	dummyRdeEntity := []byte(`
+
+	// We are missing the mandatory field "foo" on purpose
+	rdeEntityJson := []byte(`
 	{
-		"foo": {
-			"key": "stringValue"
-		},
-		"bar": "stringValue2",
+		"bar": "stringValue1",
 		"prop2": {
-			"subprop1": "stringValue3",
+			"subprop1": "stringValue2",
 			"subprop2": [
-				"stringValue4",
-				"stringValue5"
+				"stringValue3",
+				"stringValue4"
 			]
 		}
 	}`)
 
-	var unmarshaledJson map[string]interface{}
-	err := json.Unmarshal(dummyRdeEntity, &unmarshaledJson)
+	var unmarshaledRdeEntityJson map[string]interface{}
+	err := json.Unmarshal(rdeEntityJson, &unmarshaledRdeEntityJson)
 	check.Assert(err, IsNil)
 
 	rde, err := rdeType.CreateRde(types.DefinedEntity{
-		Name:   "dummyRdeType",
-		Entity: unmarshaledJson,
+		Name:       check.TestName(),
+		ExternalId: "123",
+		Entity:     unmarshaledRdeEntityJson,
 	})
 	check.Assert(err, IsNil)
-	check.Assert(rde.DefinedEntity.Name, Equals, "dummyRdeType")
+	check.Assert(rde.DefinedEntity.Name, Equals, check.TestName())
 	check.Assert(*rde.DefinedEntity.State, Equals, "PRE_CREATED")
 
+	// If we don't resolve the RDE, we cannot delete it
+	err = rde.Delete()
+	check.Assert(err, NotNil)
+	check.Assert(true, Equals, strings.Contains(err.Error(), "RDE_ENTITY_NOT_RESOLVED"))
+
+	// Resolution should fail as we missed to add a mandatory field
+	err = rde.Resolve()
+	check.Assert(err, IsNil)
+	check.Assert(*rde.DefinedEntity.State, Equals, "RESOLUTION_ERROR")
+
+	// We amend it
+	unmarshaledRdeEntityJson["foo"] = map[string]interface{}{"key": "stringValue5"}
+	err = rde.Update(types.DefinedEntity{
+		Entity: unmarshaledRdeEntityJson,
+	})
+	check.Assert(err, IsNil)
+	check.Assert(*rde.DefinedEntity.State, Equals, "RESOLUTION_ERROR")
+
+	// This time it should resolve
 	err = rde.Resolve()
 	check.Assert(err, IsNil)
 	check.Assert(*rde.DefinedEntity.State, Equals, "RESOLVED")
@@ -146,13 +150,44 @@ func testRdeCrud(check *C, rdeType *DefinedEntityType) {
 	// The RDE can't be deleted until rde.Resolve() is called
 	AddToCleanupListOpenApi(rde.DefinedEntity.ID, check.TestName(), types.OpenApiPathVersion1_0_0+types.OpenApiEndpointEntities+rde.DefinedEntity.ID)
 
-	// Delete the RDE instance prior to the RDE type deletion
+	// Delete the RDE instance now that it's resolved
 	deletedId := rde.DefinedEntity.ID
 	err = rde.Delete()
 	check.Assert(err, IsNil)
 	check.Assert(*rde.DefinedEntity, DeepEquals, types.DefinedEntity{})
 
+	// RDE should not exist anymore
 	_, err = rdeType.GetRdeById(deletedId)
 	check.Assert(err, NotNil)
 	check.Assert(strings.Contains(err.Error(), ErrorEntityNotFound.Error()), Equals, true)
+}
+
+// loadRdeTypeSchemaFromTestResources loads the RDE schema present in the test-resources folder and unmarshals it
+// into a map. Returns an error if something fails along the way.
+func loadRdeTypeSchemaFromTestResources() (map[string]interface{}, error) {
+	// Load the RDE type schema
+	rdeFilePath := "../test-resources/rde_type.json"
+	_, err := os.Stat(rdeFilePath)
+	if os.IsNotExist(err) {
+		return nil, fmt.Errorf("unable to find RDE type file '%s': %s", rdeFilePath, err)
+	}
+
+	rdeFile, err := os.OpenFile(filepath.Clean(rdeFilePath), os.O_RDONLY, 0400)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open RDE type file '%s': %s", rdeFilePath, err)
+	}
+	defer safeClose(rdeFile)
+
+	rdeSchema, err := io.ReadAll(rdeFile)
+	if err != nil {
+		return nil, fmt.Errorf("error reading RDE type file %s: %s", rdeFilePath, err)
+	}
+
+	var unmarshaledJson map[string]interface{}
+	err = json.Unmarshal(rdeSchema, &unmarshaledJson)
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal RDE type file %s: %s", rdeFilePath, err)
+	}
+
+	return unmarshaledJson, nil
 }

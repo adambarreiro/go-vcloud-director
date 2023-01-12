@@ -152,7 +152,7 @@ func (vcdClient *VCDClient) GetRdeTypeById(id string) (*DefinedEntityType, error
 
 // Update updates the receiver Runtime Defined Entity type with the values given by the input.
 // Only System administrator can update RDE types.
-func (rdeType *DefinedEntityType) Update(rdeToUpdate types.DefinedEntityType) error {
+func (rdeType *DefinedEntityType) Update(rdeTypeToUpdate types.DefinedEntityType) error {
 	client := rdeType.client
 	if !client.IsSysAdmin {
 		return fmt.Errorf("updating Runtime Defined Entity types requires System user")
@@ -162,8 +162,17 @@ func (rdeType *DefinedEntityType) Update(rdeToUpdate types.DefinedEntityType) er
 		return fmt.Errorf("ID of the receiver Runtime Defined Entity type is empty")
 	}
 
-	if rdeToUpdate.ID != "" && rdeToUpdate.ID != rdeType.DefinedEntityType.ID {
+	if rdeTypeToUpdate.ID != "" && rdeTypeToUpdate.ID != rdeType.DefinedEntityType.ID {
 		return fmt.Errorf("ID of the receiver Runtime Defined Entity and the input ID don't match")
+	}
+
+	// Name and schema are mandatory, despite we don't want to update them, so we populate them in this situation to avoid errors
+	// and make this method more user friendly.
+	if rdeTypeToUpdate.Name == "" {
+		rdeTypeToUpdate.Name = rdeType.DefinedEntityType.Name
+	}
+	if rdeTypeToUpdate.Schema == nil || len(rdeTypeToUpdate.Schema) == 0 {
+		rdeTypeToUpdate.Schema = rdeType.DefinedEntityType.Schema
 	}
 
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntityTypes
@@ -177,7 +186,7 @@ func (rdeType *DefinedEntityType) Update(rdeToUpdate types.DefinedEntityType) er
 		return err
 	}
 
-	err = client.OpenApiPutItem(apiVersion, urlRef, nil, rdeToUpdate, rdeType.DefinedEntityType, nil)
+	err = client.OpenApiPutItem(apiVersion, urlRef, nil, rdeTypeToUpdate, rdeType.DefinedEntityType, nil)
 	if err != nil {
 		return err
 	}
@@ -399,6 +408,12 @@ func (rde *DefinedEntity) Update(rdeToUpdate types.DefinedEntity) error {
 
 	if rde.DefinedEntity.ID == "" {
 		return fmt.Errorf("ID of the receiver Runtime Defined Entity is empty")
+	}
+
+	// Name is mandatory, despite we don't want to update it, so we populate it in this situation to avoid errors
+	// and make this method more user friendly.
+	if rdeToUpdate.Name == "" {
+		rdeToUpdate.Name = rde.DefinedEntity.Name
 	}
 
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntities
