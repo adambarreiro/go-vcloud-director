@@ -286,6 +286,12 @@ type metadataCompatible interface {
 	DeleteMetadataEntryWithDomain(key string, isSystem bool) error
 }
 
+// metadataCompatible allows centralizing and generalizing the tests for metadata compatible resources.
+//type openApiMetadataCompatible interface {
+//	GetMetadata() ([]*types.OpenApiMetadataEntry, error)
+//	GetMetadataByKey(key string) (*types.OpenApiMetadataEntry, error)
+//}
+
 type metadataTest struct {
 	Key                   string
 	Value                 string

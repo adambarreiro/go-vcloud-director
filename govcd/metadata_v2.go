@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -114,6 +115,12 @@ func (openApiOrgVdcNetwork *OpenApiOrgVdcNetwork) GetMetadataByKey(key string, i
 	return getMetadataByKey(openApiOrgVdcNetwork.client, href, key, isSystem)
 }
 
+// GetMetadataByKey returns DefinedEntity metadata corresponding to the given key and domain.
+func (rde *DefinedEntity) GetMetadataByKey(key string) (*types.OpenApiMetadataEntry, error) {
+	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntities
+	return getOpenApiMetadataByKey(rde.client, endpoint, rde.DefinedEntity.ID, key)
+}
+
 // ------------------------------------------------------------------------------------------------
 // GET all metadata
 // ------------------------------------------------------------------------------------------------
@@ -205,6 +212,11 @@ func (catalogItem *CatalogItem) GetMetadata() (*types.Metadata, error) {
 func (openApiOrgVdcNetwork *OpenApiOrgVdcNetwork) GetMetadata() (*types.Metadata, error) {
 	href := fmt.Sprintf("%s/network/%s", openApiOrgVdcNetwork.client.VCDHREF.String(), extractUuid(openApiOrgVdcNetwork.OpenApiOrgVdcNetwork.ID))
 	return getMetadata(openApiOrgVdcNetwork.client, href)
+}
+
+func (rde *DefinedEntity) GetMetadata() ([]*types.OpenApiMetadataEntry, error) {
+	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntities
+	return getAllOpenApiMetadata(rde.client, endpoint, rde.DefinedEntity.ID, nil)
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -745,12 +757,52 @@ func getMetadataByKey(client *Client, requestUri, key string, isSystem bool) (*t
 	return metadata, err
 }
 
+// getMetadata is a generic function to retrieve metadata from VCD using OpenAPI
+func getOpenApiMetadataByKey(client *Client, endpoint, objectId string, key string) (*types.OpenApiMetadataEntry, error) {
+	queryParameters := url.Values{}
+	queryParameters.Add("filter", fmt.Sprintf("keyValue.key==%s", key))
+	metadata, err := getAllOpenApiMetadata(client, endpoint, objectId, queryParameters)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(metadata) == 0 {
+		return nil, fmt.Errorf("%s could not find the metadata associated to object %s", ErrorEntityNotFound, objectId)
+	}
+
+	if len(metadata) > 1 {
+		return nil, fmt.Errorf("found more than 1 metadata entries associated to object %s", objectId)
+	}
+
+	return metadata[0], nil
+}
+
 // getMetadata is a generic function to retrieve metadata from VCD
 func getMetadata(client *Client, requestUri string) (*types.Metadata, error) {
 	metadata := &types.Metadata{}
 
 	_, err := client.ExecuteRequest(requestUri+"/metadata/", http.MethodGet, types.MimeMetaData, "error retrieving metadata: %s", nil, metadata)
 	return metadata, err
+}
+
+func getAllOpenApiMetadata(client *Client, endpoint, objectId string, queryParameters url.Values) ([]*types.OpenApiMetadataEntry, error) {
+	apiVersion, err := client.getOpenApiHighestElevatedVersion(endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	urlRef, err := client.OpenApiBuildEndpoint(endpoint, fmt.Sprintf("%s/metadata", objectId))
+	if err != nil {
+		return nil, err
+	}
+
+	allMetadata := []*types.OpenApiMetadataEntry{{}}
+	err = client.OpenApiGetAllItems(apiVersion, urlRef, queryParameters, &allMetadata, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return allMetadata, nil
 }
 
 // addMetadata adds metadata to an entity.
