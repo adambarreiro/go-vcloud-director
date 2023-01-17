@@ -643,7 +643,7 @@ func testOpenApiMetadataCRUDActions(resource openApiMetadataCompatible, check *C
 		var createdEntry *types.OpenApiMetadataEntry
 		createdEntry, err = resource.AddMetadata(types.OpenApiMetadataEntry{
 			KeyValue: types.OpenApiMetadataKeyValue{
-				Domain: takeStringPointer(testCase.Domain),
+				Domain: testCase.Domain,
 				Key:    testCase.Key,
 				Value: types.OpenApiMetadataTypedValue{
 					Type:  testCase.Type,
@@ -672,9 +672,9 @@ func testOpenApiMetadataCRUDActions(resource openApiMetadataCompatible, check *C
 		check.Assert(metadataValue.KeyValue.Value, NotNil)
 		check.Assert(metadataValue.KeyValue.Value.Value, Equals, testCase.Value)
 		check.Assert(metadataValue.KeyValue.Key, Equals, testCase.Key)
-		check.Assert(*metadataValue.KeyValue.Domain, Equals, testCase.Domain)
+		check.Assert(metadataValue.KeyValue.Domain, Equals, testCase.Domain)
 
-		if testCase.UpdateValue != "" {
+		if testCase.UpdateValue != nil {
 			updatedMetadata, err := resource.UpdateMetadata(testCase.Key, testCase.UpdateValue)
 			check.Assert(err, IsNil)
 			check.Assert(updatedMetadata, NotNil)
