@@ -445,8 +445,8 @@ type OpenApiMetadataKeyValue struct {
 
 // OpenApiMetadataTypedValue asd
 type OpenApiMetadataTypedValue struct {
-	Type  string `json:"type:omitempty"`
-	Value string `json:"value,omitempty"`
+	Value interface{} `json:"value,omitempty"` // The type is any because it depends on the Type field.
+	Type  string      `json:"type,omitempty"`
 }
 
 // DefinedEntityType describes what a defined entity type should look like.

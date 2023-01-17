@@ -540,7 +540,7 @@ type openApiMetadataCompatible interface {
 
 type openApiMetadataTest struct {
 	Key                   string
-	Value                 string
+	Value                 interface{} // The type depends on the Type attribute
 	Type                  string
 	IsReadOnly            bool
 	Domain                string
@@ -575,7 +575,7 @@ func testOpenApiMetadataCRUDActions(resource openApiMetadataCompatible, check *C
 		},
 		{
 			Key:                   "numberKey",
-			Value:                 "1",
+			Value:                 float64(1),
 			Type:                  types.OpenApiMetadataNumberEntry,
 			IsReadOnly:            false,
 			Domain:                "TENANT",
@@ -591,49 +591,34 @@ func testOpenApiMetadataCRUDActions(resource openApiMetadataCompatible, check *C
 		},
 		{
 			Key:                   "boolKey",
-			Value:                 "true",
+			Value:                 true,
 			Type:                  types.OpenApiMetadataBooleanEntry,
 			IsReadOnly:            false,
 			Domain:                "TENANT",
 			ExpectErrorOnFirstAdd: false,
 		},
 		{
-			Key:                   "dateKey",
-			Value:                 "notADate",
-			Type:                  types.OpenApiMetadataDateTimeEntry,
+			Key:                   "readOnlyProviderKey",
+			Value:                 "readOnlyProviderValue",
+			Type:                  types.OpenApiMetadataStringEntry,
 			IsReadOnly:            false,
-			Domain:                "TENANT",
-			ExpectErrorOnFirstAdd: true,
-		},
-		{
-			Key:                   "dateKey",
-			Value:                 "2022-10-05T13:44:00.000Z",
-			Type:                  types.OpenApiMetadataDateTimeEntry,
-			IsReadOnly:            false,
-			Domain:                "TENANT",
+			Domain:                "PROVIDER",
 			ExpectErrorOnFirstAdd: false,
 		},
 		{
-			Key:                   "readOnlyKey",
-			Value:                 "readOnlyValue",
+			Key:                   "readOnlyTenantKey",
+			Value:                 "readOnlyTenantValue",
 			Type:                  types.OpenApiMetadataStringEntry,
 			IsReadOnly:            true,
-			Domain:                "PROVIDER",
+			Domain:                "TENANT",
 			ExpectErrorOnFirstAdd: false,
-		},
-		{
-			Key:                   "readWriteKey",
-			Value:                 "butPlacedInProvider",
-			Type:                  types.OpenApiMetadataStringEntry,
-			IsReadOnly:            false,
-			Domain:                "PROVIDER",
-			ExpectErrorOnFirstAdd: true, // TODO
 		},
 	}
 
 	for _, testCase := range testCases {
 
-		createdEntry, err := resource.AddMetadata(types.OpenApiMetadataEntry{
+		var createdEntry *types.OpenApiMetadataEntry
+		createdEntry, err = resource.AddMetadata(types.OpenApiMetadataEntry{
 			KeyValue: types.OpenApiMetadataKeyValue{
 				Domain: testCase.Domain,
 				Key:    testCase.Key,
@@ -659,7 +644,10 @@ func testOpenApiMetadataCRUDActions(resource openApiMetadataCompatible, check *C
 
 		metadataValue, err := resource.GetMetadataByKey(createdEntry.KeyValue.Key)
 		check.Assert(err, IsNil)
-		check.Assert(metadataValue.KeyValue.Value, Equals, testCase.Value)
+		check.Assert(metadataValue, NotNil)
+		check.Assert(metadataValue.KeyValue, NotNil)
+		check.Assert(metadataValue.KeyValue.Value, NotNil)
+		check.Assert(metadataValue.KeyValue.Value.Value, Equals, testCase.Value)
 		check.Assert(metadataValue.KeyValue.Key, Equals, testCase.Key)
 		check.Assert(metadataValue.KeyValue.Domain, Equals, testCase.Domain)
 
