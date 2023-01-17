@@ -263,9 +263,10 @@ func (rdeType *DefinedEntityType) GetAllRdes(queryParameters url.Values) ([]*Def
 	return returnRDEs, nil
 }
 
-// GetRdeByName gets a RDE instance with the given name that belongs to the receiver type.
+// GetRdesByName gets RDE instances with the given name that belongs to the receiver type.
+// VCD allows to have many RDEs with the same name, hence this function returns a slice.
 // Only System administrator can retrieve RDEs.
-func (rdeType *DefinedEntityType) GetRdeByName(name string) (*DefinedEntity, error) {
+func (rdeType *DefinedEntityType) GetRdesByName(name string) ([]*DefinedEntity, error) {
 	client := rdeType.client
 	if !client.IsSysAdmin {
 		return nil, fmt.Errorf("getting a Runtime Defined Entity by name requires System user")
@@ -282,11 +283,7 @@ func (rdeType *DefinedEntityType) GetRdeByName(name string) (*DefinedEntity, err
 		return nil, fmt.Errorf("%s could not find the Runtime Defined Entity with name '%s'", ErrorEntityNotFound, name)
 	}
 
-	if len(rdeTypes) > 1 {
-		return nil, fmt.Errorf("found more than 1 Runtime Defined Entity with name '%s'", name)
-	}
-
-	return rdeTypes[0], nil
+	return rdeTypes, nil
 }
 
 // GetRdeById gets a Runtime Defined Entity by its ID
@@ -362,11 +359,17 @@ func (rdeType *DefinedEntityType) CreateRde(entity types.DefinedEntity) (*Define
 	}
 
 	maxTries := 3
-	var rde *DefinedEntity
+	var rdes []*DefinedEntity
 	for i := 0; i < maxTries; i++ {
-		rde, err = rdeType.GetRdeByName(entity.Name)
+		rdes, err = rdeType.GetRdesByName(entity.Name)
 		if err == nil {
-			return rde, nil
+			for _, rde := range rdes {
+				// This doesn't really guarantee that the chosen RDE is the one we just created, but there's no other way of
+				// fine-graining
+				if rde.DefinedEntity.State != nil && *rde.DefinedEntity.State == "PRE_CREATED" {
+					return rde, nil
+				}
+			}
 		}
 		time.Sleep(3 * time.Second)
 	}
