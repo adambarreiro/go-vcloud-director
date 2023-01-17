@@ -535,12 +535,14 @@ type openApiMetadataCompatible interface {
 	GetMetadata() ([]*types.OpenApiMetadataEntry, error)
 	GetMetadataByKey(key string) (*types.OpenApiMetadataEntry, error)
 	AddMetadata(metadataEntry types.OpenApiMetadataEntry) (*types.OpenApiMetadataEntry, error)
+	UpdateMetadata(key string, value interface{}) (*types.OpenApiMetadataEntry, error)
 	DeleteMetadata(key string) error
 }
 
 type openApiMetadataTest struct {
 	Key                   string
 	Value                 interface{} // The type depends on the Type attribute
+	UpdateValue           interface{}
 	Type                  string
 	IsReadOnly            bool
 	Domain                string
@@ -560,6 +562,7 @@ func testOpenApiMetadataCRUDActions(resource openApiMetadataCompatible, check *C
 		{
 			Key:                   "stringKey",
 			Value:                 "stringValue",
+			UpdateValue:           "stringValueUpdated",
 			Type:                  types.OpenApiMetadataStringEntry,
 			IsReadOnly:            false,
 			Domain:                "TENANT",
@@ -576,6 +579,16 @@ func testOpenApiMetadataCRUDActions(resource openApiMetadataCompatible, check *C
 		{
 			Key:                   "numberKey",
 			Value:                 float64(1),
+			UpdateValue:           float64(42),
+			Type:                  types.OpenApiMetadataNumberEntry,
+			IsReadOnly:            false,
+			Domain:                "TENANT",
+			ExpectErrorOnFirstAdd: false,
+		},
+		{
+			Key:                   "negativeNumberKey",
+			Value:                 float64(-1),
+			UpdateValue:           float64(-42),
 			Type:                  types.OpenApiMetadataNumberEntry,
 			IsReadOnly:            false,
 			Domain:                "TENANT",
@@ -592,16 +605,26 @@ func testOpenApiMetadataCRUDActions(resource openApiMetadataCompatible, check *C
 		{
 			Key:                   "boolKey",
 			Value:                 true,
+			UpdateValue:           false,
 			Type:                  types.OpenApiMetadataBooleanEntry,
 			IsReadOnly:            false,
 			Domain:                "TENANT",
 			ExpectErrorOnFirstAdd: false,
 		},
 		{
+			Key:                   "providerKey",
+			Value:                 "providerValue",
+			UpdateValue:           "providerValueUpdated",
+			Type:                  types.OpenApiMetadataStringEntry,
+			IsReadOnly:            false,
+			Domain:                "PROVIDER",
+			ExpectErrorOnFirstAdd: false,
+		},
+		{
 			Key:                   "readOnlyProviderKey",
 			Value:                 "readOnlyProviderValue",
 			Type:                  types.OpenApiMetadataStringEntry,
-			IsReadOnly:            false,
+			IsReadOnly:            true,
 			Domain:                "PROVIDER",
 			ExpectErrorOnFirstAdd: false,
 		},
@@ -620,7 +643,7 @@ func testOpenApiMetadataCRUDActions(resource openApiMetadataCompatible, check *C
 		var createdEntry *types.OpenApiMetadataEntry
 		createdEntry, err = resource.AddMetadata(types.OpenApiMetadataEntry{
 			KeyValue: types.OpenApiMetadataKeyValue{
-				Domain: testCase.Domain,
+				Domain: takeStringPointer(testCase.Domain),
 				Key:    testCase.Key,
 				Value: types.OpenApiMetadataTypedValue{
 					Type:  testCase.Type,
@@ -649,7 +672,16 @@ func testOpenApiMetadataCRUDActions(resource openApiMetadataCompatible, check *C
 		check.Assert(metadataValue.KeyValue.Value, NotNil)
 		check.Assert(metadataValue.KeyValue.Value.Value, Equals, testCase.Value)
 		check.Assert(metadataValue.KeyValue.Key, Equals, testCase.Key)
-		check.Assert(metadataValue.KeyValue.Domain, Equals, testCase.Domain)
+		check.Assert(*metadataValue.KeyValue.Domain, Equals, testCase.Domain)
+
+		if testCase.UpdateValue != "" {
+			updatedMetadata, err := resource.UpdateMetadata(testCase.Key, testCase.UpdateValue)
+			check.Assert(err, IsNil)
+			check.Assert(updatedMetadata, NotNil)
+			check.Assert(updatedMetadata.KeyValue.Key, Equals, testCase.Key)
+			check.Assert(updatedMetadata.KeyValue.Value.Type, Equals, testCase.Type)
+			check.Assert(updatedMetadata.KeyValue.Value.Value, Equals, testCase.UpdateValue)
+		}
 
 		err = resource.DeleteMetadata(metadataValue.KeyValue.Key)
 		check.Assert(err, IsNil)

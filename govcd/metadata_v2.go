@@ -585,6 +585,12 @@ func (openApiOrgVdcNetwork *OpenApiOrgVdcNetwork) MergeMetadataWithMetadataValue
 	return task.WaitTaskCompletion()
 }
 
+// UpdateMetadata updates the DefinedEntity metadata corresponding to the given key with the given value.
+func (rde *DefinedEntity) UpdateMetadata(key string, value interface{}) (*types.OpenApiMetadataEntry, error) {
+	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointEntities
+	return updateOpenApiMetadata(rde.client, endpoint, rde.DefinedEntity.ID, key, value)
+}
+
 // ------------------------------------------------------------------------------------------------
 // DELETE metadata async
 // ------------------------------------------------------------------------------------------------
@@ -932,6 +938,37 @@ func mergeMetadataAndWait(client *Client, requestUri string, metadata map[string
 	}
 
 	return task.WaitTaskCompletion()
+}
+
+// updateOpenApiMetadata updates the metadata value from the given object.
+// According to the API response when trying to update any other attribute, only value can be updated:
+// VCD_META_CRUD_MODIFY_FIELDS - Only the value field can be updated. Re-create the entry in case you want to modify any of the other fields.
+func updateOpenApiMetadata(client *Client, endpoint, objectId, key string, value interface{}) (*types.OpenApiMetadataEntry, error) {
+	result, err := getOpenApiMetadataByKey(client, endpoint, objectId, key)
+	if err != nil {
+		return nil, err
+	}
+	if result.ID == "" {
+		return nil, fmt.Errorf("could not update metadata, it doesn't have required ID: %v", result)
+	}
+
+	apiVersion, err := client.getOpenApiHighestElevatedVersion(endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	urlRef, err := client.OpenApiBuildEndpoint(endpoint, fmt.Sprintf("%s/metadata/%s", objectId, result.ID))
+	if err != nil {
+		return nil, err
+	}
+
+	result.KeyValue.Value.Value = value
+	err = client.OpenApiPutItem(apiVersion, urlRef, nil, result, &result, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // deleteMetadata deletes metadata associated to the input key from an entity referenced by its URI, then returns the
