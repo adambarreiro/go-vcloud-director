@@ -65,7 +65,7 @@ func (client Client) GetAccessControl(href, entityType, entityName string, heade
 // with accessControl.IsSharedToEveryone = true we give access to everyone
 // with accessControl.IsSharedToEveryone = false, accessControl.AccessSettings defines which subjects can access the vApp
 // For each setting we must provide:
-// * The subject (HREF and Type are mandatory)
+// * The subject (HREF and XmlType are mandatory)
 // * The access level (one of ReadOnly, Change, FullControl)
 func (client *Client) SetAccessControl(accessControl *types.ControlAccessParams, href, entityType, entityName string, headerValues map[string]string) error {
 	return client.setAccessControlWithHttpMethod(http.MethodPost, accessControl, href, entityType, entityName, headerValues)

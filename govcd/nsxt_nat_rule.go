@@ -246,8 +246,8 @@ func natRulesEqual(first, second *types.NsxtNatRule) bool {
 	// patch does not break such comparison
 	// DnatExternalPort
 	// SnatDestinationAddresses
-	// RuleType - would work up to 35.2+, but then there is another field Type
-	// Type only available since 35.2+. Must be explicitly used for REFLEXIVE type in API v36.0+
+	// RuleType - would work up to 35.2+, but then there is another field XmlType
+	// XmlType only available since 35.2+. Must be explicitly used for REFLEXIVE type in API v36.0+
 	// FirewallMatch - it exists only since API 35.2+ and has a default starting this version
 	// InternalPort - is deprecated since API V35.0+ and is replaced by DnatExternalPort
 	// Priority - is available only in API V35.2+

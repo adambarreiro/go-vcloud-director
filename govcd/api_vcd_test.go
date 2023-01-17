@@ -1787,7 +1787,7 @@ func (vcd *TestVCD) Test_NewRequestWitNotEncodedParamsWithApiVersion(check *C) {
 	resp, err := checkResp(vcd.client.Client.Http.Do(req))
 	check.Assert(err, IsNil)
 
-	check.Assert(resp.Header.Get("Content-Type"), Equals, types.MimeQueryRecords+";version="+apiVersion)
+	check.Assert(resp.Header.Get("Content-XmlType"), Equals, types.MimeQueryRecords+";version="+apiVersion)
 
 	// Repeats the call without API version change
 	req = vcd.client.Client.NewRequestWitNotEncodedParams(nil, map[string]string{"type": "media",
@@ -1797,7 +1797,7 @@ func (vcd *TestVCD) Test_NewRequestWitNotEncodedParamsWithApiVersion(check *C) {
 	check.Assert(err, IsNil)
 
 	// Checks that the regularAPI version was not affected by the previous call
-	check.Assert(resp.Header.Get("Content-Type"), Equals, types.MimeQueryRecords+";version="+vcd.client.Client.APIVersion)
+	check.Assert(resp.Header.Get("Content-XmlType"), Equals, types.MimeQueryRecords+";version="+vcd.client.Client.APIVersion)
 
 	fmt.Printf("Test: %s run with api Version: %s\n", check.TestName(), apiVersion)
 }

@@ -540,7 +540,7 @@ func uploadOvfDescription(client *Client, ovfFile string, ovfUploadUrl *url.URL)
 	ovfReader := io.TeeReader(openedFile, &buf)
 
 	request := client.NewRequest(map[string]string{}, http.MethodPut, *ovfUploadUrl, ovfReader)
-	request.Header.Add("Content-Type", "text/xml")
+	request.Header.Add("Content-XmlType", "text/xml")
 
 	_, err = checkResp(client.Http.Do(request))
 	if err != nil {
@@ -614,7 +614,7 @@ func createItemForUpload(client *Client, createHREF *url.URL, catalogItemName st
 			"</UploadVAppTemplateParams>")
 
 	request := client.NewRequest(map[string]string{}, http.MethodPost, *createHREF, reqBody)
-	request.Header.Add("Content-Type", "application/vnd.vmware.vcloud.uploadVAppTemplateParams+xml")
+	request.Header.Add("Content-XmlType", "application/vnd.vmware.vcloud.uploadVAppTemplateParams+xml")
 
 	response, err := checkResp(client.Http.Do(request))
 	if err != nil {
@@ -645,7 +645,7 @@ func createItemWithLink(client *Client, createHREF *url.URL, catalogItemName, it
 	reqTemplate := `<UploadVAppTemplateParams xmlns="%s" name="%s" sourceHref="%s"><Description>%s</Description></UploadVAppTemplateParams>`
 	reqBody := bytes.NewBufferString(fmt.Sprintf(reqTemplate, types.XMLNamespaceVCloud, catalogItemName, vappTemplateRemoteUrl, itemDescription))
 	request := client.NewRequest(map[string]string{}, http.MethodPost, *createHREF, reqBody)
-	request.Header.Add("Content-Type", "application/vnd.vmware.vcloud.uploadVAppTemplateParams+xml")
+	request.Header.Add("Content-XmlType", "application/vnd.vmware.vcloud.uploadVAppTemplateParams+xml")
 
 	response, err := checkResp(client.Http.Do(request))
 	if err != nil {

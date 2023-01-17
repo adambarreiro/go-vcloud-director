@@ -205,7 +205,7 @@ func validateCreateLbServiceMonitor(lbMonitorConfig *types.LbMonitor, egw *EdgeG
 	}
 
 	if lbMonitorConfig.Type == "" {
-		return fmt.Errorf("load balancer monitor Type cannot be empty")
+		return fmt.Errorf("load balancer monitor XmlType cannot be empty")
 	}
 
 	return nil

@@ -157,7 +157,7 @@ func (vdc *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) (Task, e
 				b := bytes.NewBufferString(xml.Header + string(output))
 				util.Logger.Printf("[DEBUG] VCD Client configuration: %s", b)
 				req := vdc.client.NewRequest(map[string]string{}, http.MethodPost, *createUrl, b)
-				req.Header.Add("Content-Type", av.Type)
+				req.Header.Add("Content-XmlType", av.Type)
 				resp, err = checkResp(vdc.client.Http.Do(req))
 				if err != nil {
 					if reErrorBusy2.MatchString(err.Error()) {

@@ -24,8 +24,8 @@ type genericEntity interface {
 // Defines a generic getter to test all Get* methods
 type getterTestDefinition struct {
 	parentName    string                                    // Name of the parent entity
-	parentType    string                                    // Type of the parent entity
-	entityType    string                                    // Type of the entity to retrieve (Must match the type name)
+	parentType    string                                    // XmlType of the parent entity
+	entityType    string                                    // XmlType of the entity to retrieve (Must match the type name)
 	entityName    string                                    // Name of the entity to retrieve
 	getterPrefix  string                                    // Base name for getter functions
 	getByName     func(string, bool) (genericEntity, error) // A function that retrieves the entity by name

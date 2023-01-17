@@ -519,10 +519,14 @@ const (
 
 // Metadata type constants
 const (
-	MetadataStringValue   string = "MetadataStringValue"
-	MetadataNumberValue   string = "MetadataNumberValue"
-	MetadataDateTimeValue string = "MetadataDateTimeValue"
-	MetadataBooleanValue  string = "MetadataBooleanValue"
+	MetadataStringValue          string = "MetadataStringValue"
+	OpenApiMetadataStringEntry   string = "StringEntry"
+	MetadataNumberValue          string = "MetadataNumberValue"
+	OpenApiMetadataNumberEntry   string = "NumberEntry"
+	MetadataDateTimeValue        string = "MetadataDateTimeValue"
+	OpenApiMetadataDateTimeEntry string = "DateTimeEntry"
+	MetadataBooleanValue         string = "MetadataBooleanValue"
+	OpenApiMetadataBooleanEntry  string = "BoolEntry"
 
 	MetadataReadOnlyVisibility  string = "READONLY"
 	MetadataHiddenVisibility    string = "PRIVATE"

@@ -127,7 +127,7 @@ func (egw *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []int
 		util.Logger.Printf("[DEBUG] POSTING TO URL: %s", apiEndpoint.Path)
 		util.Logger.Printf("[DEBUG] XML TO SEND:\n%s", buffer)
 
-		req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
+		req.Header.Add("Content-XmlType", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
 
 		resp, err = checkResp(egw.client.Http.Do(req))
 		if err != nil {
@@ -694,7 +694,7 @@ func (egw *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types
 		util.Logger.Printf("[DEBUG] POSTING TO URL: %s", apiEndpoint.Path)
 		util.Logger.Printf("[DEBUG] XML TO SEND:\n%s", buffer)
 
-		req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
+		req.Header.Add("Content-XmlType", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
 
 		resp, err = checkResp(egw.client.Http.Do(req))
 		if err != nil {

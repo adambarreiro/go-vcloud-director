@@ -100,7 +100,7 @@ var endpointElevatedApiVersions = map[string][]string{
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointNsxtNatRules: {
 		//"34.0", // Basic minimum required version
 		"35.2", // Introduces support for new fields FirewallMatch and Priority
-		"36.0", // Adds support for new NAT Rule Type - REFLEXIVE (field Type must be used instead of RuleType)
+		"36.0", // Adds support for new NAT Rule XmlType - REFLEXIVE (field XmlType must be used instead of RuleType)
 	},
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointExternalNetworks: {
 		//"33.0", // Basic minimum required version
@@ -118,7 +118,7 @@ var endpointElevatedApiVersions = map[string][]string{
 	},
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointFirewallGroups: {
 		//"34.0", // Basic minimum required version
-		"36.0", // Adds support for Dynamic Security Groups by deprecating `Type` field in favor of `TypeValue`
+		"36.0", // Adds support for Dynamic Security Groups by deprecating `XmlType` field in favor of `TypeValue`
 	},
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointAlbController: {
 		//"35.0", // Basic minimum required version

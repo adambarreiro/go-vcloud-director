@@ -192,7 +192,7 @@ func (vcdClient *VCDClient) GetAuthResponse(username, password, org string) (*ht
 // SetToken will set the authorization token in the client, without using other credentials
 // Up to version 29, token authorization uses the header key x-vcloud-authorization
 // In version 30+ it also uses X-Vmware-Vcloud-Access-Token:TOKEN coupled with
-// X-Vmware-Vcloud-Token-Type:"bearer"
+// X-Vmware-Vcloud-Token-XmlType:"bearer"
 func (vcdClient *VCDClient) SetToken(org, authHeader, token string) error {
 	if authHeader == ApiTokenHeader {
 		util.Logger.Printf("[DEBUG] Attempt authentication using API token")
