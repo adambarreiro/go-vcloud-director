@@ -791,7 +791,7 @@ func removeCatalogItemOnError(client *Client, vappTemplateLink *url.URL, itemNam
 			if err != nil {
 				util.Logger.Printf("[Error] Error deleting Catalog item %s: %s", vappTemplateLink, err)
 			}
-			if len(vAppTemplate.Tasks.Task) > 0 {
+			if vAppTemplate.Tasks != nil && len(vAppTemplate.Tasks.Task) > 0 {
 				util.Logger.Printf("[TRACE] Task found. Will try to cancel.\n")
 				break
 			}
