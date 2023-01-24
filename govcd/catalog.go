@@ -503,6 +503,10 @@ func queryVappTemplateAndVerifyTask(client *Client, vappTemplateUrl *url.URL, ne
 		return nil, err
 	}
 
+	if vappTemplateParsed.Tasks == nil {
+		return vappTemplateParsed, fmt.Errorf("the vApp Template %s does not contain tasks, probably an error happened during upload", vappTemplateUrl)
+	}
+
 	for _, task := range vappTemplateParsed.Tasks.Task {
 		if task.Status == "error" && newItemName == task.Owner.Name {
 			util.Logger.Printf("[Error] %#v", task.Error)
