@@ -32,7 +32,7 @@ func (vcdClient *VCDClient) CreateContentLibrary(config *types.ContentLibrary) (
 	}
 	c := crudConfig{
 		entityLabel: labelContentLibrary,
-		endpoint:    types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointContentLibraries,
+		endpoint:    types.OpenApiPathVcf + types.OpenApiEndpointContentLibraries,
 	}
 	outerType := ContentLibrary{vcdClient: vcdClient}
 	return createOuterEntity(&vcdClient.Client, outerType, c, config)
@@ -41,7 +41,7 @@ func (vcdClient *VCDClient) CreateContentLibrary(config *types.ContentLibrary) (
 func (vcdClient *VCDClient) GetAllContentLibrarys(queryParameters url.Values) ([]*ContentLibrary, error) {
 	c := crudConfig{
 		entityLabel:     labelContentLibrary,
-		endpoint:        types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointContentLibraries,
+		endpoint:        types.OpenApiPathVcf + types.OpenApiEndpointContentLibraries,
 		queryParameters: queryParameters,
 	}
 
@@ -73,7 +73,7 @@ func (vcdClient *VCDClient) GetContentLibraryByName(name string) (*ContentLibrar
 func (vcdClient *VCDClient) GetContentLibraryById(id string) (*ContentLibrary, error) {
 	c := crudConfig{
 		entityLabel:    labelContentLibrary,
-		endpoint:       types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointContentLibraries,
+		endpoint:       types.OpenApiPathVcf + types.OpenApiEndpointContentLibraries,
 		endpointParams: []string{id},
 	}
 
@@ -84,7 +84,7 @@ func (vcdClient *VCDClient) GetContentLibraryById(id string) (*ContentLibrary, e
 func (o *ContentLibrary) Update(ContentLibraryConfig *types.ContentLibrary) (*ContentLibrary, error) {
 	c := crudConfig{
 		entityLabel:    labelContentLibrary,
-		endpoint:       types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointContentLibraries,
+		endpoint:       types.OpenApiPathVcf + types.OpenApiEndpointContentLibraries,
 		endpointParams: []string{o.ContentLibrary.ID},
 	}
 	outerType := ContentLibrary{vcdClient: o.vcdClient}
@@ -94,7 +94,7 @@ func (o *ContentLibrary) Update(ContentLibraryConfig *types.ContentLibrary) (*Co
 func (o *ContentLibrary) Delete() error {
 	c := crudConfig{
 		entityLabel:    labelContentLibrary,
-		endpoint:       types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointContentLibraries,
+		endpoint:       types.OpenApiPathVcf + types.OpenApiEndpointContentLibraries,
 		endpointParams: []string{o.ContentLibrary.ID},
 	}
 	return deleteEntityById(&o.vcdClient.Client, c)
